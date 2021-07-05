@@ -40,7 +40,7 @@ def update_params(theta0,theta1,learning_rate,dtheta0,dtheta1):
 """
 intialize theta0, theta1
 compute intial cost
-    while((old_cost-new_cost)<some threshold) ow 
+    while((old_cost-new_cost)<some threshold)
         1 - compute cost 
         2 - get gradient
         3 - update params
