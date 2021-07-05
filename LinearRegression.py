@@ -1,5 +1,4 @@
 # import libraries
-from matplotlib import colors
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -87,7 +86,7 @@ def fit_model(X,Y,learning_rate = 0.001,itters = 50,tolerance = 1e-5,
         
         plt.plot(points,predicted_line,"orange")
         plt.grid()
-        plt.legend(["data","linear regression fit"])
+        plt.legend(["Linear regression fit","Data"])
     return theta0,theta1
 
 def predict(x_point,theta0,theta1):
