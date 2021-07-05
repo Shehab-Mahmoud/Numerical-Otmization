@@ -1,12 +1,11 @@
+# import libraries
+from matplotlib import colors
 import numpy as np
 import matplotlib.pyplot as plt
 
+# training data
 x_points =np.array( [[1,1,2,3,4,5,6,7,8,9,10,11]]).T
 y_points = np.array([[1,2,3,1,4,5,6,4,7,10,15,9]]).T
-
-print(np.zeros(x_points.shape[0]).shape)
-
-plt.scatter(x_points,y_points)
 
 # intialize parameters for the model
 # also get the number of training points
@@ -38,7 +37,7 @@ def update_params(theta0,theta1,learning_rate,dtheta0,dtheta1):
     theta1 = theta1 - learning_rate*dtheta1;
     
     return theta0, theta1
-    
+
 """
 intialize theta0, theta1
 compute intial cost
@@ -50,9 +49,11 @@ compute intial cost
 """
 def fit_model(X,Y,learning_rate = 0.001,itters = 50,tolerance = 1e-5,
                 plot_result = False,show_iters = False,with_iters=False,with_tolerance = False):
+
+    # intialize parameters
     theta0 , theta1 ,m= intialize_params(X)
     
-    # using iterations
+    # using iterations as stop condtion
     if(with_iters):
         for i in range(itters):
             dtheta0,dtheta1 = calculate_grads(X,Y,theta0,theta1,m)
@@ -62,7 +63,7 @@ def fit_model(X,Y,learning_rate = 0.001,itters = 50,tolerance = 1e-5,
             if(show_iters):
                 print("caluculated cost at iteration number "+str(i)+ " :"+str(cost))
 
-    # using tolerance
+    # using tolerance as stop condtion
     if(with_tolerance):
         i =0
         while(True):
@@ -77,14 +78,16 @@ def fit_model(X,Y,learning_rate = 0.001,itters = 50,tolerance = 1e-5,
                 break
 
     
+    # plot fitted line w.r.t data
     if(plot_result):
         plt.scatter(x_points,y_points)
 
         points = np.linspace(0,10,10)
         predicted_line = theta0+theta1*points
         
-        plt.plot(points,predicted_line)
-
+        plt.plot(points,predicted_line,"orange")
+        plt.grid()
+        plt.legend(["data","linear regression fit"])
     return theta0,theta1
 
 def predict(x_point,theta0,theta1):
