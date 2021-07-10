@@ -1,11 +1,14 @@
 # import libraries
 import numpy as np
 import matplotlib.pyplot as plt
+from numpy.core.defchararray import array
+from sklearn.metrics import r2_score
 np.random.seed(2040)
 
 # training data
 x_points =np.array( [[1,1,2,3,4,5,6,7,8,9,10,11]]).T
 y_points = np.array([[1,2,3,1,4,5,6,4,7,10,15,9]]).T
+
 
 def intialize_params(X):
     theta0 = 0
@@ -43,7 +46,14 @@ def update_params(theta0,theta1,learning_rate,dtheta0,dtheta1):
     
     return theta0, theta1
 
-def fit_model(X,Y,learning_rate = 0.001,tolerance = 1e-5,n_batches = 2,plot_result=False,kind ="SGD"):
+def create_batches(X,y,batch_size):
+    for i in range(0,X.shape[0],batch_size):
+        batch = slice(i,i+batch_size)
+        yield X[batch],y[batch]
+        
+
+
+def fit_model(X,Y,learning_rate = 0.001,tolerance = 1e-3,batch_size = 6,n_epochs = 20,plot_result=False,kind ="SGD"):
     theta0, theta1,m = intialize_params(X)
 
     # Batch Gradient descent
@@ -56,47 +66,53 @@ def fit_model(X,Y,learning_rate = 0.001,tolerance = 1e-5,n_batches = 2,plot_resu
             theta0,theta1 = update_params(theta0,theta1,learning_rate,dtheta0,dtheta1)
             cost_new = compute_cost(theta0,theta1,X,Y,m)
             iters += 1 
-            if((cost_old-cost_new)<=tolerance):
+            
+            if(np.linalg.norm(np.array([dtheta0,dtheta1]))<=tolerance):
+                break
+            elif(abs(cost_old-cost_new)<=tolerance):
                 break
         
     # mini-batch Gradient descent
     if(kind == "mini-batch"):
 
         iters = 0
-        batch_size = int(len(X)/n_batches)
+
 
         while(True):
-            batch_index = np.random.randint(0,len(X-1),batch_size)
 
-            x_batch = np.take(X,batch_index)
-            y_batch = np.take(Y,batch_index)
-
-            cost_old = compute_cost(theta0,theta1,x_batch,y_batch,m)
-            dtheta0 ,dtheta1 = calculate_grads_batch(x_batch,y_batch,theta0,theta1,m)
-            theta0,theta1 = update_params(theta0,theta1,learning_rate,dtheta0,dtheta1)
-            cost_new = compute_cost(theta0,theta1,x_batch,y_batch,m)
-
+            
+            for batch in create_batches(X,Y,batch_size):
+                cost_old = compute_cost(theta0,theta1,batch[0],batch[1],batch_size)
+                dtheta0 ,dtheta1 = calculate_grads_batch(batch[0],batch[1],theta0,theta1,batch_size)
+                theta0,theta1 = update_params(theta0,theta1,learning_rate,dtheta0,dtheta1)
+                cost_new = compute_cost(theta0,theta1,batch[0],batch[1],batch_size)
+                
+            
             iters += 1 
-            if((cost_old-cost_new)<=tolerance):
+            if(np.linalg.norm(np.array([dtheta0,dtheta1]))<=tolerance):
                 break
+            elif(abs(cost_new-cost_old)<=tolerance):
+                break
+        
         
 
     # Stocastic Gradient descent
     if(kind == "SGD"):
         iters = 0
         while(True):
-            indexes = np.random.randint(0, len(X)) # random sample
             
-            Xs = np.take(X, indexes)
-            ys = np.take(Y, indexes)
-
-            cost_old = compute_cost(theta0,theta1,Xs,ys,1)
-            dtheta0 , dtheta1 = calculate_grads_stocastic(Xs,ys,theta0,theta1)
-            theta0, theta1 = update_params(theta0,theta1,learning_rate,dtheta0,dtheta1)
-            cost_new = compute_cost(theta0,theta1,Xs,ys,1)   
             
+            for batch in create_batches(X,Y,1):
+                cost_old = compute_cost(theta0,theta1,batch[0],batch[1],1)
+                dtheta0 , dtheta1 = calculate_grads_stocastic(batch[0],batch[1],theta0,theta1)
+                theta0, theta1 = update_params(theta0,theta1,learning_rate,dtheta0,dtheta1)
+                cost_new = compute_cost(theta0,theta1,batch[0],batch[1],1)   
+                
+           
             iters +=1
-            if((cost_old-cost_new)<=tolerance):
+            if(np.linalg.norm(np.array([dtheta0,dtheta1]))<=tolerance):
+                break
+            elif(abs(cost_new-cost_old)<=tolerance):
                 break
     # plot fitted line w.r.t data
 
@@ -116,14 +132,19 @@ def fit_model(X,Y,learning_rate = 0.001,tolerance = 1e-5,n_batches = 2,plot_resu
 
 
 theta0,theta1,iters = fit_model(x_points,y_points,kind="batch",plot_result=False)
-print("\n\nbatch : \ntheta0 = "+str(theta0)+"\ntheta1 = "+str(theta1)+"\nNumbers of itterations to converse : "+str(iters)+"\n\n")
+print("batch : \ntheta0 = "+str(theta0)+"\ntheta1 = "+str(theta1)+"\nNumbers of itterations to converse : "+str(iters))
+predictions = hyp(theta0,theta1,x_points)
+print("R2 score :"+ str(r2_score(y_points,predictions))+"\n\n")
 
-theta0,theta1,iters = fit_model(x_points,y_points,kind="SGD",plot_result=True)
-print("SGD : \ntheta0 = "+str(theta0)+"\ntheta1 = "+str(theta1)+"\nNumbers of itterations to converse : "+str(iters)+"\n\n")
+theta0,theta1,iters = fit_model(x_points,y_points,kind="SGD",plot_result=False,tolerance=1e-2)
+print("SGD : \ntheta0 = "+str(theta0)+"\ntheta1 = "+str(theta1)+"\nNumbers of epochs to converse : "+str(iters))
+predictions = hyp(theta0,theta1,x_points)
+print("R2 score :"+ str(r2_score(y_points,predictions))+"\n\n")
 
-theta0,theta1,iters = fit_model(x_points,y_points,kind="mini-batch",plot_result=False)
-print("mini-batch :\ntheta0 = "+str(theta0)+"\ntheta1 = "+str(theta1)+"\nNumbers of itterations to converse : "+str(iters))
-
+theta0,theta1,iters = fit_model(x_points,y_points,kind="mini-batch",plot_result=True,batch_size=6)
+print("mini-batch :\ntheta0 = "+str(theta0)+"\ntheta1 = "+str(theta1)+"\nNumbers of epochs to converse : "+str(iters))
+predictions = hyp(theta0,theta1,x_points)
+print("R2 score :"+ str(r2_score(y_points,predictions))+"\n\n")
 
 
 plt.show()
